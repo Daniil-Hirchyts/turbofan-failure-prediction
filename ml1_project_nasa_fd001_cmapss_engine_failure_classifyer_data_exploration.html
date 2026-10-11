@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>FD001_data_exploration_restyled_33</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>FD001_data_exploration_restyled_35_with_class_separation</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -8061,7 +8061,10 @@ if (document.readyState === "loading") { document.addEventListener("DOMContentLo
 <li>🧭 <strong>Part 3 of 4 · What can predict it?</strong><ul>
 <li><a href="#section-6">🔍 6. Which columns carry information?</a></li>
 <li><a href="#section-7">📉 7. What does degradation look like?</a></li>
-<li><a href="#section-8">🩺 8. Do the two classes look different?</a></li>
+<li><a href="#section-8">🩺 8. Do the two classes look different?</a><ul>
+<li><a href="#sub-8-4">8.4 Can we visually separate the two classes in feature space?</a></li>
+</ul>
+</li>
 <li><a href="#section-9">🚨 9. Outliers: errors or signal?</a></li>
 <li><a href="#section-10">🔗 10. Are the sensors redundant?</a></li>
 <li><a href="#section-11">🏆 11. Which sensors are the most linked to the time left before failure?</a></li>
@@ -11644,7 +11647,11 @@ dtype: float64
 <td><a href="#sub-8-3">Zoom on the two weak sensors, <code>s9</code> and <code>s14</code></a></td>
 </tr>
 <tr>
-<td><a href="#conclusion-8">8.4</a></td>
+<td><a href="#sub-8-4">8.4</a></td>
+<td><a href="#sub-8-4">Class separation in original sensor space</a></td>
+</tr>
+<tr>
+<td><a href="#conclusion-8">8.5</a></td>
 <td><a href="#conclusion-8">Conclusion</a></td>
 </tr>
 </tbody>
@@ -12011,6 +12018,158 @@ if (outputEl) {{
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=123eebe5">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><a id="sub-8-4"></a></p>
+<hr/>
+<h3 id="%F0%9F%94%8D-8.4-Can-we-visually-separate-the-two-classes-in-feature-space?">🔍 8.4 Can we visually separate the two classes in feature space?<a class="anchor-link" href="#%F0%9F%94%8D-8.4-Can-we-visually-separate-the-two-classes-in-feature-space?">¶</a></h3><div style="background-color: rgba(31, 119, 180, 0.05); border-left: 4px solid rgba(31, 119, 180, 0.55); border-radius: 4px; padding: 4px 16px; margin-top: 8px;">
+<p>Two complementary views of <strong>training observations only</strong>: class-wise distributions of two informative sensors, followed by their joint scatter plot. Both use original sensor measurements, without PCA.</p>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a33e43e8">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Two views of class separation: sensor distributions and original sensor space</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.express</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">px</span>
+
+<span class="c1"># Class labels and colours</span>
+<span class="n">class_names</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="s2">"y = 0 (healthy)"</span><span class="p">,</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="s2">"y = 1 (imminent)"</span>
+<span class="p">}</span>
+<span class="n">class_colors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"y = 0 (healthy)"</span><span class="p">:</span> <span class="n">BLUE</span><span class="p">,</span>
+    <span class="s2">"y = 1 (imminent)"</span><span class="p">:</span> <span class="n">ORANGE</span>
+<span class="p">}</span>
+
+<span class="c1"># Rank sensors by their standardized mean difference between classes</span>
+<span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">useful_sensors</span><span class="p">]</span> <span class="o">-</span> <span class="n">train</span><span class="p">[</span><span class="n">useful_sensors</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span> <span class="o">/</span> <span class="n">train</span><span class="p">[</span><span class="n">useful_sensors</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+<span class="n">gap</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">train</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="o">-</span> <span class="n">z</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">train</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="p">)</span>
+
+<span class="n">ranked</span> <span class="o">=</span> <span class="n">gap</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="c1"># Select two informative sensors, avoiding a highly correlated pair when possible</span>
+<span class="n">s1</span> <span class="o">=</span> <span class="n">ranked</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">s2</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">ranked</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">s</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mf">0.9</span><span class="p">),</span>
+    <span class="n">ranked</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Prepare visualization data</span>
+<span class="n">plot_data</span> <span class="o">=</span> <span class="n">train</span><span class="p">[[</span><span class="s2">"unit"</span><span class="p">,</span> <span class="s2">"cycle"</span><span class="p">,</span> <span class="s2">"RUL"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">plot_data</span><span class="p">[</span><span class="s2">"class"</span><span class="p">]</span> <span class="o">=</span> <span class="n">plot_data</span><span class="p">[</span><span class="s2">"y"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">class_names</span><span class="p">)</span>
+
+<span class="c1"># Plot 1: Sensor distributions by class</span>
+<span class="n">distribution_data</span> <span class="o">=</span> <span class="n">plot_data</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span>
+    <span class="n">id_vars</span><span class="o">=</span><span class="p">[</span><span class="s2">"class"</span><span class="p">],</span>
+    <span class="n">value_vars</span><span class="o">=</span><span class="p">[</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">],</span>
+    <span class="n">var_name</span><span class="o">=</span><span class="s2">"sensor"</span><span class="p">,</span>
+    <span class="n">value_name</span><span class="o">=</span><span class="s2">"measurement"</span>
+<span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">violin</span><span class="p">(</span>
+    <span class="n">distribution_data</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="s2">"class"</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s2">"measurement"</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"class"</span><span class="p">,</span>
+    <span class="n">facet_col</span><span class="o">=</span><span class="s2">"sensor"</span><span class="p">,</span>
+    <span class="n">box</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">points</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">color_discrete_map</span><span class="o">=</span><span class="n">class_colors</span><span class="p">,</span>
+    <span class="n">template</span><span class="o">=</span><span class="n">TEMPLATE</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Sensor distributions by failure status"</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">height</span><span class="o">=</span><span class="mi">550</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="s2">"Sensor measurement"</span><span class="p">,</span>
+    <span class="n">legend_title</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+    <span class="n">legend</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">"h"</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">matches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">showticklabels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">for_each_annotation</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Plot 2: Class separation using two original sensors</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">plot_data</span><span class="p">,</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"class"</span><span class="p">,</span>
+    <span class="n">color_discrete_map</span><span class="o">=</span><span class="n">class_colors</span><span class="p">,</span>
+    <span class="n">opacity</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span>
+    <span class="n">template</span><span class="o">=</span><span class="n">TEMPLATE</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Class separation using two informative sensors"</span><span class="p">,</span>
+    <span class="n">hover_data</span><span class="o">=</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">,</span> <span class="s2">"cycle"</span><span class="p">,</span> <span class="s2">"RUL"</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">height</span><span class="o">=</span><span class="mi">550</span><span class="p">,</span>
+    <span class="n">xaxis_title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">s1</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">SENSOR_NAMES</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">yaxis_title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">s2</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">SENSOR_NAMES</span><span class="p">[</span><span class="n">s2</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">legend_title</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+    <span class="n">legend</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">"h"</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">"bottom"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.02</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"🔍 Sensors displayed: </span><span class="si">{</span><span class="n">s1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">s2</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"📊 Training observations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">plot_data</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"📐 Pearson correlation between sensors: </span><span class="si">{</span><span class="n">train</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">s2</span><span class="p">])</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=965d3448">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<div style="background-color: rgba(210, 153, 34, 0.12); border-left: 4px solid #d29922; border-radius: 4px; padding: 4px 16px; margin-top: 8px;">
+<p>💡 <strong>Interpretation — Class Separation in Sensor Space.</strong></p>
+<p>The visualizations explore whether sensor measurements can distinguish <strong>normal operating conditions ($y = 0$)</strong> from <strong>imminent failures ($y = 1$, RUL ≤ 30 cycles)</strong>.</p>
+<p><strong>1. Sensor distributions</strong></p>
+<ul>
+<li>Differences in distributions indicate that sensors contain information relevant to failure prediction.</li>
+<li>Overlapping distributions suggest that individual sensors may not be sufficient to classify observations reliably.</li>
+</ul>
+<p><strong>2. Class separation in 2D</strong></p>
+<ul>
+<li>The scatter plot reveals how both classes are distributed according to two informative sensors.</li>
+<li>Distinct regions suggest that classification is feasible, while overlapping regions indicate potentially ambiguous observations.</li>
+</ul>
+<p><strong>3. Implications for modelling</strong></p>
+<p>These observations motivate comparing <strong>linear models (Logistic Regression)</strong> with <strong>nonlinear models (Random Forest, SVM)</strong>.</p>
+<p>⚠️ <strong>A 2D visualization cannot establish linear separability in the original 14-dimensional feature space.</strong> Model evaluation is necessary to determine which approach performs best.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f231ea0b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -12020,12 +12179,13 @@ if (outputEl) {{
 <hr/>
 <p><a id="conclusion-8"></a></p>
 <div style="background-color: rgba(130, 80, 223, 0.08); border-left: 6px solid #8250df; border-radius: 6px; padding: 4px 16px;">
-<h3 id="%F0%9F%8F%81-8.4-Conclusion">🏁 8.4 Conclusion<a class="anchor-link" href="#%F0%9F%8F%81-8.4-Conclusion">¶</a></h3><p>🎯 <strong>Goal of the section</strong>: Check whether the sensor values are different for healthy rows ($y = 0$) and for imminent-failure rows ($y = 1$).</p>
+<h3 id="%F0%9F%8F%81-8.5-Conclusion">🏁 8.5 Conclusion<a class="anchor-link" href="#%F0%9F%8F%81-8.5-Conclusion">¶</a></h3><p>🎯 <strong>Goal of the section</strong>: Check whether the sensor values are different for healthy rows ($y = 0$) and for imminent-failure rows ($y = 1$).</p>
 <p>✅ <strong>What we found.</strong></p>
 <ul>
 <li>✅ <strong>Yes, the two classes look different.</strong> For 12 of the 14 sensors, the average of the $y = 1$ rows is 1.5 to 1.9 standard deviations away from the average of the $y = 0$ rows.</li>
 <li>🏅 <strong>Best separators.</strong> <code>s11</code> (+1.86), <code>s4</code> (+1.81), <code>s12</code> (-1.79) and <code>s7</code> (-1.75).</li>
 <li>🔀 <strong>But they overlap.</strong> No single sensor with a single threshold separates the classes cleanly: the model will have to combine several sensors.</li>
+<li>🔍 <strong>Class separation in two dimensions.</strong> The violin plots and two-sensor scatter plot give complementary views of within-class spread and overlap using training observations only. Separation in 2D cannot establish linear separability across all 14 sensors.</li>
 <li>⚠️ <strong>Two weak sensors.</strong> <code>s9</code> and <code>s14</code> separate less well (1.17 and 0.95), with imminent-failure values about 3 times more spread out than the healthy ones.</li>
 <li>🔔 <strong>Shape of the distributions.</strong> Roughly bell-shaped in each class, which makes logistic regression and Naive Bayes sensible baselines.</li>
 </ul>
@@ -12781,7 +12941,36 @@ if (outputEl) {{
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p><a id="sub-10-1"></a></p>
 <hr>
-<h3 id="%F0%9F%97%BA%EF%B8%8F-10.1-The-correlation-matrix">🗺️ 10.1 The correlation matrix<a class="anchor-link" href="#%F0%9F%97%BA%EF%B8%8F-10.1-The-correlation-matrix">¶</a></h3>
+<h3 id="%F0%9F%97%BA%EF%B8%8F-10.1-The-correlation-matrix,-sensors-grouped-by-family">🗺️ 10.1 The correlation matrix, sensors grouped by family<a class="anchor-link" href="#%F0%9F%97%BA%EF%B8%8F-10.1-The-correlation-matrix,-sensors-grouped-by-family">¶</a></h3><div style="background-color: rgba(31, 119, 180, 0.05); border-left: 4px solid rgba(31, 119, 180, 0.55); border-radius: 4px; padding: 4px 16px;">
+<p>To make the groups visible, the sensors are not listed in numerical order. They are grouped in the three families seen in <a href="#section-7">section 7</a> and <a href="#section-8">section 8</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Sensors</th>
+<th>How we recognise it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📈 <strong>Rise before failure</strong></td>
+<td>8 sensors: <code>s2</code>, <code>s3</code>, <code>s4</code>, <code>s8</code>, <code>s11</code>, <code>s13</code>, <code>s15</code>, <code>s17</code></td>
+<td>their correlation with the RUL is negative</td>
+</tr>
+<tr>
+<td>📉 <strong>Fall before failure</strong></td>
+<td>4 sensors: <code>s7</code>, <code>s12</code>, <code>s20</code>, <code>s21</code></td>
+<td>their correlation with the RUL is positive</td>
+</tr>
+<tr>
+<td>❔ <strong><code>s9</code> and <code>s14</code></strong></td>
+<td>Nc (physical core speed) and NRc (corrected core speed)</td>
+<td>the two unreliable sensors of sections 7 and 8</td>
+</tr>
+</tbody>
+</table>
+<p>Each family is surrounded by a <strong>black frame</strong> on the diagonal. The value written in a cell is $r$ for the two sensors of its row and column.</p>
+</div>
 </hr></div>
 </div>
 </div>
@@ -12796,18 +12985,41 @@ if (outputEl) {{
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Pearson correlation between every pair of sensors</span>
 <span class="n">corr</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">useful_sensors</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
 
-<span class="c1"># Heatmap of the correlation matrix</span>
-<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">zmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">zmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color_continuous_scale</span><span class="o">=</span><span class="s2">"RdBu_r"</span><span class="p">,</span> <span class="n">text_auto</span><span class="o">=</span><span class="s2">".2f"</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
-                <span class="n">template</span><span class="o">=</span><span class="n">TEMPLATE</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"Pearson correlation between the 14 remaining sensors"</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">height</span><span class="o">=</span><span class="mi">650</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span><span class="n">textfont_size</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="c1"># The three families seen in sections 7 and 8, used to order the rows and columns of the matrix</span>
+<span class="n">direction</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">useful_sensors</span><span class="p">]</span><span class="o">.</span><span class="n">corrwith</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="s2">"RUL"</span><span class="p">])</span>     <span class="c1"># r &lt; 0 with the RUL: the sensor rises as the failure approaches</span>
+<span class="n">apart</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"s9"</span><span class="p">,</span> <span class="s2">"s14"</span><span class="p">]</span>                                          <span class="c1"># the two unreliable sensors</span>
+<span class="n">rising</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">useful_sensors</span> <span class="k">if</span> <span class="n">direction</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">apart</span><span class="p">]</span>
+<span class="n">falling</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">useful_sensors</span> <span class="k">if</span> <span class="n">direction</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">apart</span><span class="p">]</span>
+<span class="n">families</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"📈 rise before failure"</span><span class="p">:</span> <span class="n">rising</span><span class="p">,</span> <span class="s2">"📉 fall before failure"</span><span class="p">:</span> <span class="n">falling</span><span class="p">,</span> <span class="s2">"❔ s9, s14"</span><span class="p">:</span> <span class="n">apart</span><span class="p">}</span>
+<span class="n">order</span> <span class="o">=</span> <span class="n">rising</span> <span class="o">+</span> <span class="n">falling</span> <span class="o">+</span> <span class="n">apart</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2"> · </span><span class="si">{</span><span class="n">SENSOR_NAMES</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">' - '</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">order</span><span class="p">]</span>      <span class="c1"># code and short name, e.g. "s11 · Ps30"</span>
+
+<span class="c1"># Heatmap of the correlation matrix, sensors grouped by family</span>
+<span class="n">ordered</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">order</span><span class="p">,</span> <span class="n">order</span><span class="p">]</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Heatmap</span><span class="p">(</span>
+    <span class="n">z</span><span class="o">=</span><span class="n">ordered</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">zmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">zmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">colorscale</span><span class="o">=</span><span class="s2">"RdBu_r"</span><span class="p">,</span> <span class="n">xgap</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ygap</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">text</span><span class="o">=</span><span class="n">ordered</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">texttemplate</span><span class="o">=</span><span class="s2">"%</span><span class="si">{text:.2f}</span><span class="s2">"</span><span class="p">,</span> <span class="n">textfont_size</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+    <span class="n">colorbar</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"r"</span><span class="p">,</span> <span class="n">tickvals</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])))</span>
+
+<span class="c1"># One black frame per family on the diagonal, with its name above the matrix</span>
+<span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">families</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_shape</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"rect"</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">start</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="n">end</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y0</span><span class="o">=</span><span class="n">start</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y1</span><span class="o">=</span><span class="n">end</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span>
+                  <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">end</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">yshift</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">"&lt;b&gt;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&lt;/b&gt;"</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">end</span>
+
+<span class="c1"># Layout: first sensor at the top, square cells</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">autorange</span><span class="o">=</span><span class="s2">"reversed"</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">tickangle</span><span class="o">=-</span><span class="mi">45</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">template</span><span class="o">=</span><span class="n">TEMPLATE</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">720</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="mi">110</span><span class="p">),</span>
+                  <span class="n">title</span><span class="o">=</span><span class="s2">"Pearson correlation between the 14 sensors, grouped by family"</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
-<span class="c1"># Pairs of almost identical sensors (each pair counted once)</span>
-<span class="n">pairs</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">),</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span>
-<span class="n">strong</span> <span class="o">=</span> <span class="n">pairs</span><span class="p">[</span><span class="n">pairs</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mf">0.9</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">abs</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"🔗 Pairs with |r| &gt;= 0.9:"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">strong</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+<span class="c1"># Size of each family</span>
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">families</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;24</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">}</span><span class="s2"> sensors | </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">members</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -12820,38 +13032,15 @@ if (outputEl) {{
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
-<div> <div class="plotly-graph-div" id="9551fbdd-6f49-4c5f-a5ee-f9922e627bf7" style="height:650px; width:100%;"></div> <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("9551fbdd-6f49-4c5f-a5ee-f9922e627bf7")) {                    Plotly.newPlot(                        "9551fbdd-6f49-4c5f-a5ee-f9922e627bf7",                        [{"coloraxis":"coloraxis","name":"0","texttemplate":"%{z:.2f}","x":["s2","s3","s4","s7","s8","s9","s11","s12","s13","s14","s15","s17","s20","s21"],"y":["s2","s3","s4","s7","s8","s9","s11","s12","s13","s14","s15","s17","s20","s21"],"z":[[1.0,0.6026096254119674,0.7149492357344351,-0.7021364512462589,0.6623249714774174,0.2737642497712981,0.7400200250826956,-0.7245784731486259,0.6617924441473203,0.17975200898130694,0.6759751834687656,0.6298855524724691,-0.6618407016052607,-0.6680502336445686],[0.6026096254119674,1.0,0.6784127230560498,-0.6645953071132292,0.6024805063934716,0.3229644012471919,0.6959001518952433,-0.6803068131690223,0.6009632389153459,0.23713725709941313,0.6399212019115169,0.600017206635657,-0.6259414240527787,-0.6339008220838394],[0.7149492357344351,0.6784127230560498,1.0,-0.7931295615103569,0.7468516378386505,0.2974286048640259,0.8301356963159814,-0.8155905161052142,0.7451584171065417,0.19074766359059775,0.7584588237333837,0.7034991076071142,-0.7480671529345257,-0.7451931072313168],[-0.7021364512462589,-0.6645953071132292,-0.7931295615103569,1.0,-0.7671324922557783,-0.21783524789184075,-0.8228050249957694,0.8127126013254141,-0.7646112718879472,-0.11005295045571616,-0.7470510147905534,-0.6928926302047299,0.7361633224361062,0.7374465463515106],[0.6623249714774174,0.6024805063934716,0.7468516378386505,-0.7671324922557783,1.0,-0.03209112729242318,0.782212769633699,-0.7865396050294026,0.8260843322333415,-0.1447869585928319,0.7009493494249727,0.6277852737540895,-0.6870302309800845,-0.6888400311461289],[0.2737642497712981,0.3229644012471919,0.2974286048640259,-0.21783524789184075,-0.03209112729242318,1.0,0.274591217379591,-0.21023832661481978,-0.03476250344408918,0.9631566003059777,0.29375306140751223,0.3371097288462261,-0.28527966946137756,-0.2927951918590656],[0.7400200250826956,0.6959001518952433,0.8301356963159814,-0.8228050249957694,0.782212769633699,0.274591217379591,1.0,-0.8468835930051095,0.7807607871761727,0.16340794452120236,0.7809127612290538,0.7222963106255637,-0.7715096058655172,-0.77255446294215],[-0.7245784731486259,-0.6803068131690223,-0.8155905161052142,0.8127126013254141,-0.7865396050294026,-0.21023832661481978,-0.8468835930051095,1.0,-0.7884412801839427,-0.09814050827141887,-0.7660517140324322,-0.703485278207456,0.7519430767100542,0.7562626092978839],[0.6617924441473203,0.6009632389153459,0.7451584171065417,-0.7646112718879472,0.8260843322333415,-0.03476250344408918,0.7807607871761727,-0.7884412801839427,1.0,-0.1470360119066831,0.6976618546669631,0.6274095045812401,-0.6861723315544418,-0.6889476988497244],[0.17975200898130694,0.23713725709941313,0.19074766359059775,-0.11005295045571616,-0.1447869585928319,0.9631566003059777,0.16340794452120236,-0.09814050827141887,-0.1470360119066831,1.0,0.19376095995422535,0.24662076009569614,-0.18736446308674357,-0.19241506408879974],[0.6759751834687656,0.6399212019115169,0.7584588237333837,-0.7470510147905534,0.7009493494249727,0.29375306140751223,0.7809127612290538,-0.7660517140324322,0.6976618546669631,0.19376095995422535,1.0,0.6692049306289927,-0.7076714769272786,-0.7040428734102897],[0.6298855524724691,0.600017206635657,0.7034991076071142,-0.6928926302047299,0.6277852737540895,0.3371097288462261,0.7222963106255637,-0.703485278207456,0.6274095045812401,0.24662076009569614,0.6692049306289927,1.0,-0.651020874094054,-0.658709754613216],[-0.6618407016052607,-0.6259414240527787,-0.7480671529345257,0.7361633224361062,-0.6870302309800845,-0.28527966946137756,-0.7715096058655172,0.7519430767100542,-0.6861723315544418,-0.18736446308674357,-0.7076714769272786,-0.651020874094054,1.0,0.6934799722903521],[-0.6680502336445686,-0.6339008220838394,-0.7451931072313168,0.7374465463515106,-0.6888400311461289,-0.2927951918590656,-0.77255446294215,0.7562626092978839,-0.6889476988497244,-0.19241506408879974,-0.7040428734102897,-0.658709754613216,0.6934799722903521,1.0]],"type":"heatmap","xaxis":"x","yaxis":"y","hovertemplate":"x: %{x}\u003cbr\u003ey: %{y}\u003cbr\u003ecolor: %{z}\u003cextra\u003e\u003c\u002fextra\u003e","textfont":{"size":9}}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"white","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"#C8D4E3","linecolor":"#C8D4E3","minorgridcolor":"#C8D4E3","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmapgl":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmapgl"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermapbox":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermapbox"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"white","showlakes":true,"showland":true,"subunitcolor":"#C8D4E3"},"hoverlabel":{"align":"left"},"hovermode":"closest","mapbox":{"style":"light"},"paper_bgcolor":"white","plot_bgcolor":"white","polar":{"angularaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""},"bgcolor":"white","radialaxis":{"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"yaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"},"zaxis":{"backgroundcolor":"white","gridcolor":"#DFE8F3","gridwidth":2,"linecolor":"#EBF0F8","showbackground":true,"ticks":"","zerolinecolor":"#EBF0F8"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"baxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""},"bgcolor":"white","caxis":{"gridcolor":"#DFE8F3","linecolor":"#A2B1C6","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"#EBF0F8","linecolor":"#EBF0F8","ticks":"","title":{"standoff":15},"zerolinecolor":"#EBF0F8","zerolinewidth":2}}},"xaxis":{"anchor":"y","domain":[0.0,1.0]},"yaxis":{"anchor":"x","domain":[0.0,1.0],"autorange":"reversed"},"coloraxis":{"colorscale":[[0.0,"rgb(5,48,97)"],[0.1,"rgb(33,102,172)"],[0.2,"rgb(67,147,195)"],[0.3,"rgb(146,197,222)"],[0.4,"rgb(209,229,240)"],[0.5,"rgb(247,247,247)"],[0.6,"rgb(253,219,199)"],[0.7,"rgb(244,165,130)"],[0.8,"rgb(214,96,77)"],[0.9,"rgb(178,24,43)"],[1.0,"rgb(103,0,31)"]],"cmin":-1,"cmax":1},"title":{"text":"Pearson correlation between the 14 remaining sensors"},"height":650},                        {"responsive": true}                    ).then(function(){
-                            
-var gd = document.getElementById('9551fbdd-6f49-4c5f-a5ee-f9922e627bf7');
-var x = new MutationObserver(function (mutations, observer) {{
-        var display = window.getComputedStyle(gd).display;
-        if (!display || display === 'none') {{
-            console.log([gd, 'removed!']);
-            Plotly.purge(gd);
-            observer.disconnect();
-        }}
-}});
-
-// Listen for the removal of the full notebook cells
-var notebookContainer = gd.closest('#notebook-container');
-if (notebookContainer) {{
-    x.observe(notebookContainer, {childList: true});
-}}
-
-// Listen for the clearing of the current output cell
-var outputEl = gd.closest('.output');
-if (outputEl) {{
-    x.observe(outputEl, {childList: true});
-}}
-
-                        })                };                });            </script> </div>
+<div> <div class="plotly-graph-div" id="00c2576c-1908-4ece-bf46-89b388415f28" style="height:720px; width:100%;"></div> <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("00c2576c-1908-4ece-bf46-89b388415f28")) {                    Plotly.newPlot(                        "00c2576c-1908-4ece-bf46-89b388415f28",                        [{"colorbar": {"tickvals": [-1, -0.5, 0, 0.5, 1], "title": {"text": "r"}}, "colorscale": [[0.0, "rgb(5,48,97)"], [0.1, "rgb(33,102,172)"], [0.2, "rgb(67,147,195)"], [0.3, "rgb(146,197,222)"], [0.4, "rgb(209,229,240)"], [0.5, "rgb(247,247,247)"], [0.6, "rgb(253,219,199)"], [0.7, "rgb(244,165,130)"], [0.8, "rgb(214,96,77)"], [0.9, "rgb(178,24,43)"], [1.0, "rgb(103,0,31)"]], "text": [[1.0, 0.6026096254119663, 0.7149492357344346, 0.6623249714773479, 0.7400200250826947, 0.6617924441473915, 0.6759751834687658, 0.6298855524724675, -0.7021364512462581, -0.7245784731486256, -0.66184070160526, -0.6680502336445678, 0.27376424977129465, 0.1797520089813038], [0.6026096254119663, 1.0, 0.6784127230560499, 0.6024805063934241, 0.6959001518952431, 0.6009632389153967, 0.6399212019115184, 0.6000172066356568, -0.6645953071132289, -0.6803068131690224, -0.6259414240527787, -0.6339008220838391, 0.3229644012471922, 0.23713725709941372], [0.7149492357344346, 0.6784127230560499, 1.0, 0.7468516378386186, 0.8301356963159815, 0.7451584171066051, 0.7584588237333841, 0.7034991076071142, -0.7931295615103564, -0.815590516105214, -0.7480671529345257, -0.7451931072313168, 0.2974286048640261, 0.1907476635905984], [0.6623249714773479, 0.6024805063934241, 0.7468516378386186, 1.0, 0.7822127696336517, 0.8260843322333569, 0.7009493494249228, 0.6277852737540254, -0.7671324922557688, -0.786539605029396, -0.6870302309800361, -0.6888400311460682, -0.03209112729269517, -0.14478695859311377], [0.7400200250826947, 0.6959001518952431, 0.8301356963159815, 0.7822127696336517, 1.0, 0.780760787176233, 0.7809127612290541, 0.7222963106255637, -0.8228050249957691, -0.8468835930051095, -0.7715096058655173, -0.7725544629421499, 0.27459121737959136, 0.16340794452120305], [0.6617924441473915, 0.6009632389153967, 0.7451584171066051, 0.8260843322333569, 0.780760787176233, 1.0, 0.6976618546670144, 0.6274095045813114, -0.7646112718879825, -0.7884412801839724, -0.6861723315545051, -0.6889476988498012, -0.034762503443821514, -0.1470360119064143], [0.6759751834687658, 0.6399212019115184, 0.7584588237333841, 0.7009493494249228, 0.7809127612290541, 0.6976618546670144, 1.0, 0.6692049306289932, -0.7470510147905534, -0.7660517140324321, -0.7076714769272786, -0.7040428734102896, 0.2937530614075117, 0.19376095995422543], [0.6298855524724675, 0.6000172066356568, 0.7034991076071142, 0.6277852737540254, 0.7222963106255637, 0.6274095045813114, 0.6692049306289932, 1.0, -0.6928926302047294, -0.7034852782074562, -0.6510208740940541, -0.6587097546132158, 0.3371097288462262, 0.2466207600956967], [-0.7021364512462581, -0.6645953071132289, -0.7931295615103564, -0.7671324922557688, -0.8228050249957691, -0.7646112718879825, -0.7470510147905534, -0.6928926302047294, 1.0, 0.812712601325414, 0.7361633224361058, 0.7374465463515103, -0.2178352478918392, -0.11005295045571481], [-0.7245784731486256, -0.6803068131690224, -0.815590516105214, -0.786539605029396, -0.8468835930051095, -0.7884412801839724, -0.7660517140324321, -0.7034852782074562, 0.812712601325414, 1.0, 0.7519430767100543, 0.7562626092978838, -0.2102383266148202, -0.09814050827141958], [-0.66184070160526, -0.6259414240527787, -0.7480671529345257, -0.6870302309800361, -0.7715096058655173, -0.6861723315545051, -0.7076714769272786, -0.6510208740940541, 0.7361633224361058, 0.7519430767100543, 1.0, 0.6934799722903519, -0.2852796694613779, -0.18736446308674415], [-0.6680502336445678, -0.6339008220838391, -0.7451931072313168, -0.6888400311460682, -0.7725544629421499, -0.6889476988498012, -0.7040428734102896, -0.6587097546132158, 0.7374465463515103, 0.7562626092978838, 0.6934799722903519, 1.0, -0.2927951918590654, -0.19241506408879977], [0.27376424977129465, 0.3229644012471922, 0.2974286048640261, -0.03209112729269517, 0.27459121737959136, -0.034762503443821514, 0.2937530614075117, 0.3371097288462262, -0.2178352478918392, -0.2102383266148202, -0.2852796694613779, -0.2927951918590654, 1.0, 0.9631566003059776], [0.1797520089813038, 0.23713725709941372, 0.1907476635905984, -0.14478695859311377, 0.16340794452120305, -0.1470360119064143, 0.19376095995422543, 0.2466207600956967, -0.11005295045571481, -0.09814050827141958, -0.18736446308674415, -0.19241506408879977, 0.9631566003059776, 1.0]], "textfont": {"size": 11}, "texttemplate": "%{text:.2f}", "x": ["s2 \u00b7 T24", "s3 \u00b7 T30", "s4 \u00b7 T50", "s8 \u00b7 Nf", "s11 \u00b7 Ps30", "s13 \u00b7 NRf", "s15 \u00b7 BPR", "s17 \u00b7 htBleed", "s7 \u00b7 P30", "s12 \u00b7 phi", "s20 \u00b7 W31", "s21 \u00b7 W32", "s9 \u00b7 Nc", "s14 \u00b7 NRc"], "xgap": 1, "y": ["s2 \u00b7 T24", "s3 \u00b7 T30", "s4 \u00b7 T50", "s8 \u00b7 Nf", "s11 \u00b7 Ps30", "s13 \u00b7 NRf", "s15 \u00b7 BPR", "s17 \u00b7 htBleed", "s7 \u00b7 P30", "s12 \u00b7 phi", "s20 \u00b7 W31", "s21 \u00b7 W32", "s9 \u00b7 Nc", "s14 \u00b7 NRc"], "ygap": 1, "z": [[1.0, 0.6026096254119663, 0.7149492357344346, 0.6623249714773479, 0.7400200250826947, 0.6617924441473915, 0.6759751834687658, 0.6298855524724675, -0.7021364512462581, -0.7245784731486256, -0.66184070160526, -0.6680502336445678, 0.27376424977129465, 0.1797520089813038], [0.6026096254119663, 1.0, 0.6784127230560499, 0.6024805063934241, 0.6959001518952431, 0.6009632389153967, 0.6399212019115184, 0.6000172066356568, -0.6645953071132289, -0.6803068131690224, -0.6259414240527787, -0.6339008220838391, 0.3229644012471922, 0.23713725709941372], [0.7149492357344346, 0.6784127230560499, 1.0, 0.7468516378386186, 0.8301356963159815, 0.7451584171066051, 0.7584588237333841, 0.7034991076071142, -0.7931295615103564, -0.815590516105214, -0.7480671529345257, -0.7451931072313168, 0.2974286048640261, 0.1907476635905984], [0.6623249714773479, 0.6024805063934241, 0.7468516378386186, 1.0, 0.7822127696336517, 0.8260843322333569, 0.7009493494249228, 0.6277852737540254, -0.7671324922557688, -0.786539605029396, -0.6870302309800361, -0.6888400311460682, -0.03209112729269517, -0.14478695859311377], [0.7400200250826947, 0.6959001518952431, 0.8301356963159815, 0.7822127696336517, 1.0, 0.780760787176233, 0.7809127612290541, 0.7222963106255637, -0.8228050249957691, -0.8468835930051095, -0.7715096058655173, -0.7725544629421499, 0.27459121737959136, 0.16340794452120305], [0.6617924441473915, 0.6009632389153967, 0.7451584171066051, 0.8260843322333569, 0.780760787176233, 1.0, 0.6976618546670144, 0.6274095045813114, -0.7646112718879825, -0.7884412801839724, -0.6861723315545051, -0.6889476988498012, -0.034762503443821514, -0.1470360119064143], [0.6759751834687658, 0.6399212019115184, 0.7584588237333841, 0.7009493494249228, 0.7809127612290541, 0.6976618546670144, 1.0, 0.6692049306289932, -0.7470510147905534, -0.7660517140324321, -0.7076714769272786, -0.7040428734102896, 0.2937530614075117, 0.19376095995422543], [0.6298855524724675, 0.6000172066356568, 0.7034991076071142, 0.6277852737540254, 0.7222963106255637, 0.6274095045813114, 0.6692049306289932, 1.0, -0.6928926302047294, -0.7034852782074562, -0.6510208740940541, -0.6587097546132158, 0.3371097288462262, 0.2466207600956967], [-0.7021364512462581, -0.6645953071132289, -0.7931295615103564, -0.7671324922557688, -0.8228050249957691, -0.7646112718879825, -0.7470510147905534, -0.6928926302047294, 1.0, 0.812712601325414, 0.7361633224361058, 0.7374465463515103, -0.2178352478918392, -0.11005295045571481], [-0.7245784731486256, -0.6803068131690224, -0.815590516105214, -0.786539605029396, -0.8468835930051095, -0.7884412801839724, -0.7660517140324321, -0.7034852782074562, 0.812712601325414, 1.0, 0.7519430767100543, 0.7562626092978838, -0.2102383266148202, -0.09814050827141958], [-0.66184070160526, -0.6259414240527787, -0.7480671529345257, -0.6870302309800361, -0.7715096058655173, -0.6861723315545051, -0.7076714769272786, -0.6510208740940541, 0.7361633224361058, 0.7519430767100543, 1.0, 0.6934799722903519, -0.2852796694613779, -0.18736446308674415], [-0.6680502336445678, -0.6339008220838391, -0.7451931072313168, -0.6888400311460682, -0.7725544629421499, -0.6889476988498012, -0.7040428734102896, -0.6587097546132158, 0.7374465463515103, 0.7562626092978838, 0.6934799722903519, 1.0, -0.2927951918590654, -0.19241506408879977], [0.27376424977129465, 0.3229644012471922, 0.2974286048640261, -0.03209112729269517, 0.27459121737959136, -0.034762503443821514, 0.2937530614075117, 0.3371097288462262, -0.2178352478918392, -0.2102383266148202, -0.2852796694613779, -0.2927951918590654, 1.0, 0.9631566003059776], [0.1797520089813038, 0.23713725709941372, 0.1907476635905984, -0.14478695859311377, 0.16340794452120305, -0.1470360119064143, 0.19376095995422543, 0.2466207600956967, -0.11005295045571481, -0.09814050827141958, -0.18736446308674415, -0.19241506408879977, 0.9631566003059776, 1.0]], "zmax": 1, "zmin": -1, "type": "heatmap"}],                        {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "white", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#2a3f5f"}, "error_y": {"color": "#2a3f5f"}, "marker": {"line": {"color": "white", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f"}, "baxis": {"endlinecolor": "#2a3f5f", "gridcolor": "#C8D4E3", "linecolor": "#C8D4E3", "minorgridcolor": "#C8D4E3", "startlinecolor": "#2a3f5f"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergl"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"fillpattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#EBF0F8"}, "line": {"color": "white"}}, "header": {"fill": {"color": "#C8D4E3"}, "line": {"color": "white"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#2a3f5f", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#2a3f5f"}, "geo": {"bgcolor": "white", "lakecolor": "white", "landcolor": "white", "showlakes": true, "showland": true, "subunitcolor": "#C8D4E3"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "paper_bgcolor": "white", "plot_bgcolor": "white", "polar": {"angularaxis": {"gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": ""}, "bgcolor": "white", "radialaxis": {"gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "white", "gridcolor": "#DFE8F3", "gridwidth": 2, "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8"}, "yaxis": {"backgroundcolor": "white", "gridcolor": "#DFE8F3", "gridwidth": 2, "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8"}, "zaxis": {"backgroundcolor": "white", "gridcolor": "#DFE8F3", "gridwidth": 2, "linecolor": "#EBF0F8", "showbackground": true, "ticks": "", "zerolinecolor": "#EBF0F8"}}, "shapedefaults": {"line": {"color": "#2a3f5f"}}, "ternary": {"aaxis": {"gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": ""}, "baxis": {"gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": ""}, "bgcolor": "white", "caxis": {"gridcolor": "#DFE8F3", "linecolor": "#A2B1C6", "ticks": ""}}, "title": {"x": 0.05}, "xaxis": {"automargin": true, "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#EBF0F8", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#EBF0F8", "linecolor": "#EBF0F8", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#EBF0F8", "zerolinewidth": 2}}}, "shapes": [{"line": {"color": "black", "width": 3}, "type": "rect", "x0": -0.5, "x1": 7.5, "y0": -0.5, "y1": 7.5}, {"line": {"color": "black", "width": 3}, "type": "rect", "x0": 7.5, "x1": 11.5, "y0": 7.5, "y1": 11.5}, {"line": {"color": "black", "width": 3}, "type": "rect", "x0": 11.5, "x1": 13.5, "y0": 11.5, "y1": 13.5}], "annotations": [{"showarrow": false, "text": "<b>\ud83d\udcc8 rise before failure</b>", "x": 3.5, "y": -0.5, "yshift": 14}, {"showarrow": false, "text": "<b>\ud83d\udcc9 fall before failure</b>", "x": 9.5, "y": -0.5, "yshift": 14}, {"showarrow": false, "text": "<b>\u2754 s9, s14</b>", "x": 12.5, "y": -0.5, "yshift": 14}], "yaxis": {"autorange": "reversed"}, "xaxis": {"tickangle": -45}, "margin": {"t": 110}, "height": 720, "title": {"text": "Pearson correlation between the 14 sensors, grouped by family"}},                        {"responsive": true}                    )                };                });            </script> </div>
 </div>
 </div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>🔗 Pairs with |r| &gt;= 0.9:
-s9  s14    0.963
+<pre>📈 rise before failure   : 8 sensors | s2, s3, s4, s8, s11, s13, s15, s17
+📉 fall before failure   : 4 sensors | s7, s12, s20, s21
+❔ s9, s14               : 2 sensors | s9, s14
 </pre>
 </div>
 </div>
@@ -12867,16 +13056,19 @@ s9  s14    0.963
 <div style="background-color: rgba(210, 153, 34, 0.12); border-left: 4px solid #d29922; border-radius: 4px; padding: 4px 16px; margin-top: 8px;">
 <p>💡 <strong>Interpretation.</strong></p>
 <ul>
-<li>🧱 <strong>One large block of correlated sensors.</strong> Twelve sensors are correlated with each other at $|r|$ between 0.6 and 0.85 (for example <code>s11</code> and <code>s12</code>: -0.85, <code>s4</code> and <code>s11</code>: 0.83). The signs match the two families of <a href="#section-7">section 7</a>.</li>
-<li>🧠 This is expected: there is a single fault, so all these sensors are different views of the same hidden variable, the health of the engine.</li>
-<li>👯 <strong><code>s9</code> and <code>s14</code> form a separate pair</strong>, almost identical to each other ($r = 0.96$) and weakly correlated with the rest. One of the two is redundant.</li>
+<li>🟥 <strong>Inside the two large frames, everything is red.</strong> Two sensors of the same family move together: $r$ from $+0.60$ to $+0.83$ among the 8 that rise, and from $+0.69$ to $+0.81$ among the 4 that fall.</li>
+<li>🟦 <strong>Between the two large frames, everything is blue.</strong> A sensor that rises and a sensor that falls move in opposite directions: $r$ from $-0.63$ to $-0.85$. The link is as strong as inside a family, only the sign changes.</li>
+<li>🧱 <strong>So these 12 sensors form one single block</strong>: every one of them is linked to the 11 others with $\lvert r\rvert \ge 0.60$.</li>
+<li>⬜ <strong>The rows and columns of <code>s9</code> and <code>s14</code> are pale.</strong> Their link with the 12 others is weak ($\lvert r\rvert$ from 0.03 to 0.34).</li>
+<li>👯 <strong>Their own small frame is dark red.</strong> <code>s9</code> (Nc, physical core speed) and <code>s14</code> (NRc, corrected core speed) are almost identical to each other: $r = +0.96$.</li>
+<li>🧠 The block of 12 is expected: there is a single fault, so all these sensors are different views of the same hidden variable, the health of the engine.</li>
 </ul>
 <p>⚠️ <strong>Consequences for modelling.</strong> The features are strongly collinear:</p>
 <ul>
 <li>📉 the coefficients of a logistic regression become unstable and hard to interpret;</li>
 <li>🚫 the independence assumption of Naive Bayes is broken.</li>
 </ul>
-<p>👉 This justifies the <strong>feature selection</strong> step that follows, and a PCA would probably summarise most of the information in very few components.</p>
+<p>👉 This justifies the <strong>feature selection</strong> step that follows.</p>
 </div>
 </div>
 </div>
@@ -12894,8 +13086,8 @@ s9  s14    0.963
 <h3 id="%F0%9F%8F%81-10.2-Conclusion">🏁 10.2 Conclusion<a class="anchor-link" href="#%F0%9F%8F%81-10.2-Conclusion">¶</a></h3><p>🎯 <strong>Goal of the section</strong>: Find the sensors that carry the same information.</p>
 <p>✅ <strong>What we found.</strong></p>
 <ul>
-<li>🧱 <strong>Yes, the sensors are redundant.</strong> Twelve of them are correlated with each other, with $\lvert r\rvert$ between 0.6 and 0.85 (for example <code>s11</code> and <code>s12</code>: -0.85, <code>s4</code> and <code>s11</code>: 0.83).</li>
-<li>👯 <strong>A separate pair.</strong> <code>s9</code> and <code>s14</code> are almost identical to each other ($r = 0.96$) and weakly correlated with the rest: one of the two is enough.</li>
+<li>🧱 <strong>Yes, the sensors are redundant.</strong> Twelve of them are correlated with each other, with $\lvert r\rvert$ between 0.6 and 0.85 (for example <code>s11</code> and <code>s12</code>: -0.85, <code>s4</code> and <code>s11</code>: 0.83). The 8 that rise and the 4 that fall form one single block: only the sign of $r$ differs.</li>
+<li>👯 <strong>A separate pair.</strong> <code>s9</code> and <code>s14</code> are almost identical to each other ($r = 0.96$, the strongest link of the matrix) and weakly correlated with the rest ($\lvert r\rvert$ from 0.03 to 0.34, the weakest links): one of the two is enough.</li>
 <li>🧠 <strong>Why.</strong> There is a single fault, so all these sensors are different views of the same thing: the health of the engine.</li>
 <li>⚠️ <strong>Consequence for modelling.</strong> Strongly correlated features make the coefficients of a logistic regression unstable and break the independence assumption of Naive Bayes.</li>
 </ul>
