@@ -1,6 +1,6 @@
 # FD001 website
 
-A one-page visual summary of the two notebooks: the engine, the data, the models and the results.
+A one-page visual summary of [the merged notebook](../nasa_fd001_predictive_maintenance.ipynb): the engine, the data, the models and the results.
 
 ```bash
 npm install
@@ -15,7 +15,7 @@ The charts read `src/data/fd001.json`. To rebuild it from the raw C-MAPSS files 
 npm run data
 ```
 
-The script repeats the notebook pipeline and stops if any number differs from the notebooks.
+The script repeats the notebook's reference pipeline and stops if a checked number differs from the reference results.
 
 Built with React, Tailwind, [EvilCharts](https://evilcharts.com) (Recharts) and the Turbofan figure from [Anatomy](https://github.com/wheresryan22/anatomy) (MIT).
 

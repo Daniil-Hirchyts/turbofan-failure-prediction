@@ -1,7 +1,7 @@
-"""Rebuild the results of the two notebooks and export what the website draws to src/data/fd001.json.
+"""Rebuild the merged notebook's reference results and export the website data to src/data/fd001.json.
 
-The code repeats the notebooks (same data, label, features, folds, models, grids, threshold and seeds), so every
-number on the site comes from the same pipeline. The asserts check it against the figures printed in the notebooks.
+The code repeats nasa_fd001_predictive_maintenance.ipynb (same data, label, features, folds, models, grids,
+threshold and seeds), so every number on the site comes from the same pipeline. The asserts check its reference results.
 
 Run from the repository root:  python3 website/scripts/export_data.py
 """
@@ -34,7 +34,7 @@ DATA_DIR = ROOT / "cmapss_nasa_turbo_engine_6_data" / "CMAPSSData"
 OUT = ROOT / "website" / "src" / "data" / "fd001.json"
 W, N_FOLDS, SEED = 30, 5, 0
 
-# ---------------------------------------------------------------- data, label, features (notebook 2, section 1)
+# ---------------------------------------------------------------- data, label, features (notebook sections 1, 5, 13)
 SETTINGS = ["setting_1", "setting_2", "setting_3"]
 SENSORS = [f"s{i}" for i in range(1, 22)]
 COLUMNS = ["unit", "cycle"] + SETTINGS + SENSORS
@@ -79,7 +79,7 @@ assert len(train) == 20631 and train["y"].sum() == 3100 and len(test) == 13096
 assert len(test_last) == 100 and test_last["y"].sum() == 25
 
 
-# ---------------------------------------------------------------- protocol (notebook 2, section 1.2)
+# ---------------------------------------------------------------- protocol (notebook section 13.2)
 def get_score(model, X):
     return model.predict_proba(X)[:, 1] if hasattr(model, "predict_proba") else model.decision_function(X)
 
@@ -155,12 +155,12 @@ for s in SENSORS:
 assert {e["id"] for e in sensors if not e["kept"]} == {"s1", "s5", "s6", "s10", "s16", "s18", "s19"}
 assert abs(train["s11"].corr(train["RUL"]) + 0.70) < 0.01
 
-# ---------------------------------------------------------------- baseline and model comparison (sections 2, 3)
+# ---------------------------------------------------------------- baseline and model comparison (notebook sections 14, 15)
 baseline_folds, _ = cross_validate(DummyClassifier(strategy="prior"), FEATURES)
 baseline = baseline_folds.mean()
 default_cv = {name: cross_validate(model, FEATURES)[0].mean() for name, model in models.items()}
 
-# ---------------------------------------------------------------- s9 and s14 (section 4)
+# ---------------------------------------------------------------- s9 and s14 (notebook section 16)
 tested = ["Logistic regression", "Naive Bayes", "k-NN", "Random forest", "Gradient boosting"]
 feature_test = []
 for name in tested:
@@ -173,7 +173,7 @@ for name in tested:
     feature_test.append({"model": name, "diff": r4(diffs.mean()), "better": int((diffs > 0).sum()), "folds": len(diffs)})
 print(f"[{time.time() - start:5.0f}s] s9/s14 test done")
 
-# ---------------------------------------------------------------- tuning (section 6)
+# ---------------------------------------------------------------- tuning (notebook section 18)
 grids = {
     "Logistic regression": {"clf__C": [0.01, 0.1, 1, 10, 100]},
     "Naive Bayes": {"clf__var_smoothing": [1e-9, 1e-6, 1e-3, 1e-1]},
@@ -211,7 +211,7 @@ best_ap = max(reeval[(n, "tuned")]["ap"] for n in models)
 CHOSEN = [n for n in SIMPLICITY if reeval[(n, "tuned")]["ap"] >= best_ap - 0.005][0]
 assert CHOSEN == "Logistic regression"
 
-# ---------------------------------------------------------------- threshold (section 7.2)
+# ---------------------------------------------------------------- threshold (notebook section 19.2)
 oof = tuned_oof[CHOSEN]
 precision, recall, thresholds = precision_recall_curve(y_train, oof)
 f2 = 5 * precision[:-1] * recall[:-1] / np.maximum(4 * precision[:-1] + recall[:-1], 1e-12)
@@ -224,7 +224,7 @@ for t in np.round(np.linspace(0.02, 0.98, 49), 2):
     p, r = precision_score(y_train, pred, zero_division=0), recall_score(y_train, pred)
     curve.append({"t": float(t), "recall": r4(r), "precision": r4(p), "f2": r4(5 * p * r / max(4 * p + r, 1e-12))})
 
-# ---------------------------------------------------------------- test engines (sections 8, 9)
+# ---------------------------------------------------------------- test engines (notebook sections 20, 21)
 final = clone(tuned[CHOSEN]).fit(train[FEATURES], y_train)
 score = get_score(final, test_last[FEATURES])
 truth = test_last["y"].to_numpy()
