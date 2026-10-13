@@ -57,6 +57,7 @@ export type Data = {
   corr: { ids: string[]; symbols: string[]; r: number[][] };
   hist: { edges: number[]; sensors: Record<string, { healthy: number[]; imminent: number[] }> };
   testScores: Record<string, number[]>;
+  generator: { max: number; rho: number; mean: number[][]; std: number[][]; chol: number[][]; check: number[]; real: number[] };
 };
 
 export const data = raw as unknown as Data;

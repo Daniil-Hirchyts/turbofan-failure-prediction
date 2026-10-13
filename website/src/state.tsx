@@ -15,7 +15,8 @@ export const SECTIONS: { id: string; n: string; label: string; dock: DockMode }[
   { id: "test", n: "08", label: "Test", dock: "threshold" },
   { id: "errors", n: "09", label: "Errors", dock: "threshold" },
   { id: "aging", n: "10", label: "Over time", dock: "threshold" },
-  { id: "conclusion", n: "11", label: "Conclusion", dock: "none" },
+  { id: "simulate", n: "11", label: "Try it", dock: "threshold" },
+  { id: "conclusion", n: "12", label: "Conclusion", dock: "none" },
 ];
 
 export const KEPT = data.sensors.filter((s) => s.kept).sort((a, b) => Math.abs(b.r!) - Math.abs(a.r!));

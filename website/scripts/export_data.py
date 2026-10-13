@@ -16,6 +16,7 @@ from sklearn.base import clone
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.inspection import permutation_importance
+import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (accuracy_score, average_precision_score, f1_score, precision_recall_curve,
                              precision_score, recall_score, roc_auc_score)
@@ -32,6 +33,8 @@ warnings.filterwarnings("ignore")
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "cmapss_nasa_turbo_engine_6_data" / "CMAPSSData"
 OUT = ROOT / "website" / "src" / "data" / "fd001.json"
+MODEL_FILE = ROOT / "models" / "fd001_logistic_regression.joblib"
+MODEL_CARD = ROOT / "models" / "fd001_logistic_regression.json"
 W, N_FOLDS, SEED = 30, 5, 0
 
 # ---------------------------------------------------------------- data, label, features (notebook sections 1, 5, 13)
@@ -225,7 +228,13 @@ for t in np.round(np.linspace(0.02, 0.98, 49), 2):
     curve.append({"t": float(t), "recall": r4(r), "precision": r4(p), "f2": r4(5 * p * r / max(4 * p + r, 1e-12))})
 
 # ---------------------------------------------------------------- test engines (notebook sections 20, 21)
-final = clone(tuned[CHOSEN]).fit(train[FEATURES], y_train)
+# The model saved by the notebook (section 20.1) is the one every chart and the website use
+assert MODEL_FILE.exists(), "Run nasa_fd001_predictive_maintenance.ipynb first: it saves the model to models/"
+final = joblib.load(MODEL_FILE)
+card = json.loads(MODEL_CARD.read_text())
+assert card["features"] == FEATURES and abs(card["threshold"] - THRESHOLD) < 1e-12
+refit = clone(tuned[CHOSEN]).fit(train[FEATURES], y_train)
+assert np.abs(refit.predict_proba(test[FEATURES])[:, 1] - final.predict_proba(test[FEATURES])[:, 1]).max() < 1e-9
 score = get_score(final, test_last[FEATURES])
 truth = test_last["y"].to_numpy()
 alarm = score >= THRESHOLD
@@ -277,6 +286,43 @@ for name, model in tuned.items():
     fitted_model = final if name == CHOSEN else clone(model).fit(train[FEATURES], y_train)
     test_scores[name] = [round(float(v), 5) for v in get_score(fitted_model, test_last[FEATURES])]
 
+# ---------------------------------------------------------------- the model and a data generator for the browser
+z_card = (test[FEATURES].to_numpy() - np.array(card["mean"])) / np.array(card["scale"])
+by_hand = 1 / (1 + np.exp(-(z_card @ np.array(card["coef"]) + card["intercept"])))
+assert np.abs(by_hand - final.predict_proba(test[FEATURES])[:, 1]).max() < 1e-12
+
+GEN_MAX = 250
+gen_rows = train[train["RUL"] <= GEN_MAX]
+grid = pd.Index(np.arange(0, GEN_MAX + 1), name="RUL")
+smooth = lambda frame: frame.reindex(grid).interpolate().rolling(9, center=True, min_periods=1).mean()
+gen_mean = smooth(gen_rows.groupby("RUL")[FEATURES].mean())
+gen_std = smooth(gen_rows.groupby("RUL")[FEATURES].std())
+resid = (gen_rows[FEATURES] - gen_mean.loc[gen_rows["RUL"]].to_numpy()) / gen_std.loc[gen_rows["RUL"]].to_numpy()
+gen_corr = np.corrcoef(resid.to_numpy().T)
+chol = np.linalg.cholesky(gen_corr + 1e-9 * np.eye(len(FEATURES)))
+lagged = resid.assign(unit=gen_rows["unit"].to_numpy()).groupby("unit")[FEATURES].shift(1)
+rho = float(np.nanmean([resid[f].corr(lagged[f]) for f in FEATURES]))
+
+rng_gen = np.random.default_rng(SEED)
+check = []
+for lo, hi in [(0, 10), (11, 20), (21, 30), (31, 40), (41, 50), (51, 75), (76, 100), (101, 150)]:
+    ruls = rng_gen.integers(lo, hi + 1, 4000)
+    zs = rng_gen.standard_normal((len(ruls), len(FEATURES))) @ chol.T
+    xs = gen_mean.loc[ruls].to_numpy() + gen_std.loc[ruls].to_numpy() * zs
+    check.append(float((final.predict_proba(pd.DataFrame(xs, columns=FEATURES))[:, 1] >= THRESHOLD).mean()))
+train_alarm = final.predict_proba(train[FEATURES])[:, 1] >= THRESHOLD
+real = [float(train_alarm[(train["RUL"] >= lo) & (train["RUL"] <= hi)].mean())
+        for lo, hi in [(0, 10), (11, 20), (21, 30), (31, 40), (41, 50), (51, 75), (76, 100), (101, 150)]]
+print("alarm share by band, generated:", [round(v, 3) for v in check])
+print("alarm share by band, training :", [round(v, 3) for v in real])
+assert max(abs(g - r) for g, r in zip(check, real)) < 0.06
+
+generator_json = {"max": GEN_MAX, "rho": round(rho, 4),
+                  "mean": [[round(float(v), 4) for v in row] for row in gen_mean.to_numpy()],
+                  "std": [[round(float(v), 5) for v in row] for row in gen_std.to_numpy()],
+                  "chol": [[round(float(v), 6) for v in row] for row in chol],
+                  "check": [round(v, 4) for v in check], "real": [round(v, 4) for v in real]}
+
 AGING_HORIZON = 150
 aging = []
 for unit, rows in test.assign(score=all_scores).groupby("unit"):
@@ -321,6 +367,7 @@ data = {
     "corr": {"ids": ORDER, "symbols": [SENSOR_INFO[s][0] for s in ORDER], "r": [[r4(v) for v in row] for row in corr.to_numpy()]},
     "hist": {"edges": [float(e) for e in EDGES], "sensors": hist},
     "testScores": test_scores,
+    "generator": generator_json,
     "aging": aging,
     "bands": [{"band": b, "share": r4(row["mean"]), "rows": int(row["size"]), "imminent": i < 3}
               for i, (b, row) in enumerate(profile.iterrows())],

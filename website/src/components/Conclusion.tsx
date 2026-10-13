@@ -10,7 +10,7 @@ export function Conclusion() {
   return (
     <Plate
       id="conclusion"
-      n="11"
+      n="12"
       kicker="Conclusion"
       title={
         <>

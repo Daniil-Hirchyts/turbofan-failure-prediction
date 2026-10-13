@@ -10,6 +10,7 @@ import { Lives } from "./components/Lives";
 import { Models } from "./components/Models";
 import { SensorMap } from "./components/SensorMap";
 import { SideNav } from "./components/SideNav";
+import { Simulator } from "./components/Simulator";
 import { TestGrid } from "./components/TestGrid";
 import { Wear } from "./components/Wear";
 import { Weights } from "./components/Weights";
@@ -30,6 +31,7 @@ export default function App() {
         <TestGrid />
         <Errors />
         <Aging />
+        <Simulator />
         <Conclusion />
       </main>
       <Dock />
