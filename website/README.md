@@ -1,6 +1,6 @@
 # FD001 website
 
-A one-page visual summary of [the merged notebook](../nasa_fd001_predictive_maintenance.ipynb): the engine, the data, the models and the results.
+A one-page visual summary of [the predictive-maintenance notebook](../nasa_fd001_predictive_maintenance.ipynb): the engine, the data, the models and the results.
 
 ```bash
 npm install
